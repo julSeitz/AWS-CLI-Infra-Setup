@@ -20,6 +20,9 @@ igw_name="MyIgw"
 pub_rtb_name="PublicRouteTable"
 priv_rtb_name="PrivateRouteTable"
 
+## Variables for Elastic IP address
+elastic_ip_name="NATGatewayAddress"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -123,4 +126,18 @@ if [[ $? -eq 0 ]]; then
 else
         echo "An error occured while creating Private Route Table"
         exit 1
+fi
+
+## Creating Elastic IP address
+elastic_ip_id=$(aws ec2 allocate-address \
+--domain VPC \
+--tag-specification "ResourceType=elastic-ip,Tags=[{Key=Name,Value=$elastic_ip_name}]" \
+--query 'AllocationId' \
+--output text)
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Elastic IP address"
+else
+	echo "An error occured while creating Elastic IP address"
+	exit 1
 fi
