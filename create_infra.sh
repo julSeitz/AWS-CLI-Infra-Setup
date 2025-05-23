@@ -78,3 +78,15 @@ else
 	echo "An error occured while creating Internet Gateway"
 	exit 1
 fi
+
+### Attaching IGW to VPC
+aws ec2 attach-internet-gateway \
+--internet-gateway-id $igw_id \
+--vpc-id $vpc_id
+
+if [[ $? -eq 0 ]]; then
+	echo "Attached IGW to VPC"
+else
+	echo "An error occured while attaching IGW to VPC"
+	exit 1
+fi
