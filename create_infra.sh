@@ -155,7 +155,7 @@ fi
 
 ### Associating Private Subnet with Private Route Table
 aws ec2 associate-route-table \
---route-table-id $pub_rtb_id \
+--route-table-id $priv_rtb_id \
 --subnet-id $priv_subnet_id > /dev/null
 
 if [[ $? -eq 0 ]]; then
