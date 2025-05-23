@@ -129,10 +129,10 @@ priv_rtb_id=$(aws ec2 create-route-table \
 --output text)
 
 if [[ $? -eq 0 ]]; then
-        echo "Created Private Route Table" 
+    echo "Created Private Route Table" 
 else
-        echo "An error occured while creating Private Route Table"
-        exit 1
+    echo "An error occured while creating Private Route Table"
+    exit 1
 fi
 
 ## Associating Subnets with Route Tables
@@ -161,7 +161,7 @@ else
 	exit 1
 fi
 
-## Creating Elastic IP address
+## Allocating Elastic IP address
 elastic_ip_id=$(aws ec2 allocate-address \
 --domain VPC \
 --tag-specification "ResourceType=elastic-ip,Tags=[{Key=Name,Value=$elastic_ip_name}]" \
@@ -169,9 +169,9 @@ elastic_ip_id=$(aws ec2 allocate-address \
 --output text)
 
 if [[ $? -eq 0 ]]; then
-	echo "Created Elastic IP address"
+	echo "Allocated Elastic IP address"
 else
-	echo "An error occured while creating Elastic IP address"
+	echo "An error occured while allocating Elastic IP address"
 	exit 1
 fi
 
@@ -206,20 +206,19 @@ else
 fi
 
 ### Waiting until NAT Gateway is available
+echo "Waiting for NAT Gateway to become available..."
 while [[ true ]]; do
 	nat_gtw_state=$(aws ec2 describe-nat-gateways \
 	--nat-gateway-id $nat_gtw_id \
 	--query 'NatGateways[*].State' \
 	--output text)
-	echo "NAT Gateway state: $nat_gtw_state"
 	if [[ $nat_gtw_state = "available" ]]; then
+		echo "NAT Gateway is available!"
 		break
 	else
-		echo "Waiting for NAT Gateway to become available..."
-		sleep 20
+		sleep 10
 	fi
 done
-echo "NAT Gateway is available!"
 
 ### Creating Nat Gateway Route
 aws ec2 create-route \
