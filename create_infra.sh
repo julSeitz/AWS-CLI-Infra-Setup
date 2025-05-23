@@ -23,6 +23,9 @@ priv_rtb_name="PrivateRouteTable"
 ## Variables for Elastic IP address
 elastic_ip_name="NATGatewayAddress"
 
+## Variables for NAT Gateway
+nat_gtw_name="MyNATGateway"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -139,5 +142,20 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Elastic IP address"
 else
 	echo "An error occured while creating Elastic IP address"
+	exit 1
+fi
+
+## Creating NAT Gateway
+nat_gtw_id=$(aws ec2 create-nat-gateway \
+--allocation-id $elastic_ip_id \
+--subnet-id $pub_subnet_id \
+--tag-specifications "ResourceType=natgateway,Tags=[{Key=Name,Value=$nat_gtw_name}]" \
+--query 'NatGateway.NatGatewayId' \
+--output text)
+
+if [[ $? -eq 0 ]]; then
+	echo "Created NAT Gateway"
+else
+	echo "An error occured while creating NAT Gateway"
 	exit 1
 fi
