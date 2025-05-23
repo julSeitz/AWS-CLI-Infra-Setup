@@ -4,17 +4,21 @@
 
 ## Variables for VPC
 vpc_cidr="10.0.0.0/25"
+vpc_name="MyVpc"
 
 ## Variables for creating Subnets
 pub_subnet_cidr="10.0.0.0/28"
+pub_subnet_name="MyPublicSubnet"
+
 priv_subnet_cidr="10.0.0.64/26"
+priv_subnet_name="MyPrivateSubnet"
 
 # Creating Infrastructure
 
 ## Creating VPC
 vpc_id=$(aws ec2 create-vpc \
 --cidr-block $vpc_cidr \
---tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value="MyVpc"}]' \
+--tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value=$vpc_name}]" \
 --query 'Vpc.VpcId' \
 --output text)
 
@@ -31,7 +35,7 @@ fi
 pub_subnet_id=$(aws ec2 create-subnet \
 --vpc-id $vpc_id \
 --cidr-block $pub_subnet_cidr \
---tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value="MyPublicSubnet"}]' \
+--tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value="$pub_subnet_name"}]" \
 --query 'Subnet.SubnetId' \
 --output text)
 
@@ -46,7 +50,7 @@ fi
 priv_subnet_id=$(aws ec2 create-subnet \
 --vpc-id $vpc_id \
 --cidr-block $priv_subnet_cidr \
---tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value="MyPrivateSubnet"}]' \
+--tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value="$priv_subnet_name"}]" \
 --query 'Subnet.SubnetId' \
 --output text)
 
