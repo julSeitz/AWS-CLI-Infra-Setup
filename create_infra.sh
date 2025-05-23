@@ -135,6 +135,32 @@ else
         exit 1
 fi
 
+## Associating Subnets with Route Tables
+
+### Associationg Public Subnet with Public Route Table
+aws ec2 associate-route-table \
+--route-table-id $pub_rtb_id \
+--subnet-id $pub_subnet_id > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Associated Public Subnet with Public Route Table"
+else
+	echo "An error occured while associating Public Subnet with Public Route Table"
+	exit 1
+fi
+
+### Associating Private Subnet with Private Route Table
+aws ec2 associate-route-table \
+--route-table-id $pub_rtb_id \
+--subnet-id $priv_subnet_id > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Associated Private Subnet with Private Route Table"
+else
+	echo "An error occured while associating Private Subnet with Private Route Table"
+	exit 1
+fi
+
 ## Creating Elastic IP address
 elastic_ip_id=$(aws ec2 allocate-address \
 --domain VPC \
