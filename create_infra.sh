@@ -30,6 +30,10 @@ nat_gtw_name="MyNATGateway"
 igw_route_dest_cidr="0.0.0.0/0"
 nat_gtw_route_dest_cidr="0.0.0.0/0"
 
+## Variables for Security Groups
+bastion_sg_name="BastionSecurityGroup"
+bastion_sg_description="Allow SSH from my IP"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -230,5 +234,23 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Route to NAT Gateway"
 else
 	echo "An error occured while creating Route to NAT Gateway"
+	exit 1
+fi
+
+## Creating Security Groups
+
+### Creating Bastion Security Group
+bastion_sg_id=$(aws ec2 create-security-group \
+--group-name $bastion_sg_name \
+--description "$bastion_sg_description" \
+--vpc-id $vpc_id \
+--tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$bastion_sg_name}]" \
+--query 'GroupId' \
+--output text)
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Bastion Security Group"
+else
+	echo "An error occured while creating Bastion Security Group"
 	exit 1
 fi
