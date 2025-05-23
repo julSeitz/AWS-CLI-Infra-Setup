@@ -24,6 +24,9 @@ priv_rtb_name="PrivateRouteTable"
 bastion_sg_name="BastionSecurityGroup"
 bastion_sg_description="Allow SSH from my IP"
 
+priv_sg_name="PrivateSecurityGroup"
+priv_sg_description="Allow SSH only from Public Subnet"
+
 ## Variables for Elastic IP address
 elastic_ip_name="NATGatewayAddress"
 
@@ -180,6 +183,22 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Bastion Security Group"
 else
 	echo "An error occured while creating Bastion Security Group"
+	exit 1
+fi
+
+### Creating Private Security Group
+priv_sg_id=$(aws ec2 create-security-group \
+--group-name "$priv_sg_name" \
+--description "$priv_sg_description" \
+--vpc-id $vpc_id \
+--tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$priv_sg_name}]" \
+--query 'GroupId' \
+--output text)
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Private Security Group"
+else
+	echo "An error occured while creating Private Security Group"
 	exit 1
 fi
 
