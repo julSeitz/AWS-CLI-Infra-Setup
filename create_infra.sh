@@ -241,7 +241,7 @@ fi
 
 ### Creating Bastion Security Group
 bastion_sg_id=$(aws ec2 create-security-group \
---group-name $bastion_sg_name \
+--group-name "$bastion_sg_name" \
 --description "$bastion_sg_description" \
 --vpc-id $vpc_id \
 --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$bastion_sg_name}]" \
