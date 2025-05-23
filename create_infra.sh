@@ -13,6 +13,9 @@ pub_subnet_name="MyPublicSubnet"
 priv_subnet_cidr="10.0.0.64/26"
 priv_subnet_name="MyPrivateSubnet"
 
+## Variables for Internet Gateway (IGW)
+igw_name="MyIgw"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -58,5 +61,20 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Private Subnet"
 else
 	echo "An error occured while creating Private Subnet"
+	exit 1
+fi
+
+### Creating and attaching IGW
+
+#### Creating IGW
+igw_id=$(aws ec2 create-internet-gateway \
+--tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value=$igw_name}]" \
+--query 'InternetGateway.InternetGatewayId' \
+--output text)
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Internet Gateway"
+else
+	echo "An error occured while creating Internet Gateway"
 	exit 1
 fi
