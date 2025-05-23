@@ -26,6 +26,9 @@ elastic_ip_name="NATGatewayAddress"
 ## Variables for NAT Gateway
 nat_gtw_name="MyNATGateway"
 
+## Variables for Routes
+igw_route_dest_cidr="0.0.0.0/0"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -157,5 +160,20 @@ if [[ $? -eq 0 ]]; then
 	echo "Created NAT Gateway"
 else
 	echo "An error occured while creating NAT Gateway"
+	exit 1
+fi
+
+## Creating Routes
+
+### Creating IGW Route
+aws ec2 create-route \
+--route-table-id $pub_rtb_id \
+--destination-cidr-block $igw_route_dest_cidr \
+--gateway-id $igw_id > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Route to Internet Gateway"
+else
+	echo "An error occured while creating Route to Internet Gateway"
 	exit 1
 fi
