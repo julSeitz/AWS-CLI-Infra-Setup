@@ -28,6 +28,7 @@ nat_gtw_name="MyNATGateway"
 
 ## Variables for Routes
 igw_route_dest_cidr="0.0.0.0/0"
+nat_gtw_route_dest_cidr="0.0.0.0/0"
 
 # Creating Infrastructure
 
@@ -175,5 +176,18 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Route to Internet Gateway"
 else
 	echo "An error occured while creating Route to Internet Gateway"
+	exit 1
+fi
+
+### Creating Nat Gateway Route
+aws ec2 create-route \
+--route-table-id $priv_rtb_id \
+--destination-cidr-block $nat_gtw_route_dest_cidr \
+--nat-gateway-id $nat_gtw_id > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Route to NAT Gateway"
+else
+	echo "An error occured while creating Route to NAT Gateway"
 	exit 1
 fi
