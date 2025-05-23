@@ -16,6 +16,10 @@ priv_subnet_name="MyPrivateSubnet"
 ## Variables for Internet Gateway (IGW)
 igw_name="MyIgw"
 
+## Variables for Route Tables
+pub_rtb_name="PublicRouteTable"
+priv_rtb_name="PrivateRouteTable"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -88,5 +92,21 @@ if [[ $? -eq 0 ]]; then
 	echo "Attached IGW to VPC"
 else
 	echo "An error occured while attaching IGW to VPC"
+	exit 1
+fi
+
+## Creating Route Tables
+
+### Creating Public Route Table
+pub_rtb_id=$(aws ec2 create-route-table \
+--vpc-id $vpc_id \
+--tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value=$pub_rtb_name}]" \
+--query 'RouteTable.RouteTableId' \
+--output text)
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Public Route Table" 
+else
+	echo "An error occured while creating Public Route Table"
 	exit 1
 fi
