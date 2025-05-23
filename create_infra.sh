@@ -179,6 +179,22 @@ else
 	exit 1
 fi
 
+### Waiting until NAT Gateway is available
+while [[ true ]]; do
+	nat_gtw_state=$(aws ec2 describe-nat-gateways \
+	--nat-gateway-id $nat_gtw_id \
+	--query 'NatGateways[*].State' \
+	--output text)
+	echo "NAT Gateway state: $nat_gtw_state"
+	if [[ $nat_gtw_state = "available" ]]; then
+		break
+	else
+		echo "Waiting for NAT Gateway to become available..."
+		sleep 20
+	fi
+done
+echo "NAT Gateway is available!"
+
 ### Creating Nat Gateway Route
 aws ec2 create-route \
 --route-table-id $priv_rtb_id \
