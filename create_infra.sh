@@ -205,7 +205,9 @@ else
 	exit 1
 fi
 
-## Creating Bastion Security Group Ingress Rule for SSH
+## Creating Ingress Rules for Security Groups
+
+### Creating Bastion Security Group Ingress Rule for SSH
 aws ec2 authorize-security-group-ingress \
 --group-id $bastion_sg_id \
 --protocol tcp \
@@ -216,6 +218,20 @@ if [[ $? -eq 0 ]]; then
 	echo "Authorized SSH Ingress for Bastion Security Group from the public IP address of this host"
 else
 	echo "An error occured while authorizing SSH Ingress for Bastion Security Group"
+	exit 1
+fi
+
+### Creating Private Security Group Ingress Rule for SSH
+aws ec2 authorize-security-group-ingress \
+--group-id $priv_sg_id \
+--protocol tcp \
+--port 22 \
+--cidr $pub_subnet_cidr > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Authorized SSH Ingress for Private Security Group from the Public Subnet"
+else
+	echo "An error occured while authorizing SSH Ingress for Private Security Group"
 	exit 1
 fi
 
