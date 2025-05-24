@@ -40,6 +40,12 @@ nat_gtw_name="MyNATGateway"
 igw_route_dest_cidr="0.0.0.0/0"
 nat_gtw_route_dest_cidr="0.0.0.0/0"
 
+## Variables for Instances
+ami_id="ami-04999cd8f2624f834"
+instance_type="t3.micro"
+key_name="vockey"
+pub_instance_name="BastionHost"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -304,5 +310,24 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Route to NAT Gateway"
 else
 	echo "An error occured while creating Route to NAT Gateway"
+	exit 1
+fi
+
+## Creating EC2 Instances
+
+### Creating Bastion Host
+aws ec2 run-instances \
+--image-id $ami_id \
+--instance-type $instance_type \
+--key-name $key_name \
+--security-group-id $bastion_sg_id \
+--subnet-id $pub_subnet_id \
+--associate-public-ip-address \
+--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$pub_instance_name}]" > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Bastion Host"
+else
+	echo "An error occured while creating Bastion Host"
 	exit 1
 fi
