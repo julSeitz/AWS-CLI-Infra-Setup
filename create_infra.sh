@@ -48,6 +48,8 @@ pub_instance_name="BastionHost"
 
 user_data_path="file://user_data.txt"
 
+priv_instance_name="PrivateInstance"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -332,5 +334,22 @@ if [[ $? -eq 0 ]]; then
 	echo "Created Bastion Host"
 else
 	echo "An error occured while creating Bastion Host"
+	exit 1
+fi
+
+## Creating Private Instance
+aws ec2 run-instances \
+--image-id $ami_id \
+--instance-type $instance_type \
+--key-name $key_name \
+--security-group-id $priv_sg_id \
+--subnet-id $priv_subnet_id \
+--user-data $user_data_path \
+--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$priv_instance_name}]" > /dev/null
+
+if [[ $? -eq 0 ]]; then
+	echo "Created Private Instance"
+else
+	echo "An error occured while creating Private Instance"
 	exit 1
 fi
