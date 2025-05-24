@@ -46,6 +46,8 @@ instance_type="t3.micro"
 key_name="vockey"
 pub_instance_name="BastionHost"
 
+user_data_path="file://user_data.txt"
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -322,6 +324,7 @@ aws ec2 run-instances \
 --key-name $key_name \
 --security-group-id $bastion_sg_id \
 --subnet-id $pub_subnet_id \
+--user-data $user_data_path \
 --associate-public-ip-address \
 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$pub_instance_name}]" > /dev/null
 
