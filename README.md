@@ -28,19 +28,19 @@ To use this script, you must have
 ## Installation
 
 To install the script, clone this repository.  
-Make sure the above prerequisites are met and you have local execution permissions for the script.
+Make sure the above prerequisites are met and you have local execution permissions for the script
 
 ## Running the script
 
 ### GUI
 
-In the directory of this repository, double-click on the file named `create_infra.sh`.
+In the directory of this repository, double-click on the file named `create_infra.sh`
 
 ### Shell
 
 Either:
-- Navigate to the directory of this repository and call the script with: `./create_infra.sh`.
-- Call the script by it's path, for example: `/your/path/to/repository/AWS-CLI-Infra-Setup/create_infra.sh`.
+- Navigate to the directory of this repository and call the script with: `./create_infra.sh`
+- Call the script by it's path, for example: `/your/path/to/repository/AWS-CLI-Infra-Setup/create_infra.sh`
 
 ## Adjusting variables
 
