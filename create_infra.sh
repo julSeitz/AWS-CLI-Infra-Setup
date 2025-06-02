@@ -50,6 +50,21 @@ user_data_path="file://user_data.txt"
 
 priv_instance_name="PrivateInstance"
 
+# Functions
+
+# Function to check for errors and output success or failure
+function check_error() {
+	local exit_status=$?
+	local action=$1
+	local resource_name=$2
+	if [[ $exit_status -eq 0 ]]; then
+		echo "Created $resource_name"
+	else
+		echo "An error occured while $action $resource_name"
+		exit 1
+	fi
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -59,12 +74,7 @@ vpc_id=$(aws ec2 create-vpc \
 --query 'Vpc.VpcId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created VPC"
-else
-	echo "An error occured while creating the VPC"
-	exit 1
-fi
+check_error "creating" "VPC"
 
 ## Creating Subnets
 
@@ -76,12 +86,7 @@ pub_subnet_id=$(aws ec2 create-subnet \
 --query 'Subnet.SubnetId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Public Subnet"
-else
-	echo "An error occured while creating Public Subnet"
-	exit 1
-fi
+check_error "creating" "Public Subnet"
 
 ### Creating Private Subnet
 priv_subnet_id=$(aws ec2 create-subnet \
@@ -91,12 +96,7 @@ priv_subnet_id=$(aws ec2 create-subnet \
 --query 'Subnet.SubnetId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Private Subnet"
-else
-	echo "An error occured while creating Private Subnet"
-	exit 1
-fi
+check_error "creating" "Private Subnet"
 
 ### Creating and attaching IGW
 
@@ -106,24 +106,14 @@ igw_id=$(aws ec2 create-internet-gateway \
 --query 'InternetGateway.InternetGatewayId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Internet Gateway"
-else
-	echo "An error occured while creating Internet Gateway"
-	exit 1
-fi
+check_error "creating" "IGW"
 
 ### Attaching IGW to VPC
 aws ec2 attach-internet-gateway \
 --internet-gateway-id $igw_id \
 --vpc-id $vpc_id
 
-if [[ $? -eq 0 ]]; then
-	echo "Attached IGW to VPC"
-else
-	echo "An error occured while attaching IGW to VPC"
-	exit 1
-fi
+check_error "attaching" "IGW"
 
 ## Creating Route Tables
 
@@ -134,12 +124,7 @@ pub_rtb_id=$(aws ec2 create-route-table \
 --query 'RouteTable.RouteTableId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Public Route Table" 
-else
-	echo "An error occured while creating Public Route Table"
-	exit 1
-fi
+check_error "creating" "Public Route Table"
 
 ### Creating Private Route Table
 priv_rtb_id=$(aws ec2 create-route-table \
@@ -148,12 +133,7 @@ priv_rtb_id=$(aws ec2 create-route-table \
 --query 'RouteTable.RouteTableId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-    echo "Created Private Route Table" 
-else
-    echo "An error occured while creating Private Route Table"
-    exit 1
-fi
+check_error "creating" "Private Route Table"
 
 ## Associating Subnets with Route Tables
 
@@ -162,24 +142,14 @@ aws ec2 associate-route-table \
 --route-table-id $pub_rtb_id \
 --subnet-id $pub_subnet_id > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Associated Public Subnet with Public Route Table"
-else
-	echo "An error occured while associating Public Subnet with Public Route Table"
-	exit 1
-fi
+check_error "associating" "Public Subnet"
 
 ### Associating Private Subnet with Private Route Table
 aws ec2 associate-route-table \
 --route-table-id $priv_rtb_id \
 --subnet-id $priv_subnet_id > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Associated Private Subnet with Private Route Table"
-else
-	echo "An error occured while associating Private Subnet with Private Route Table"
-	exit 1
-fi
+check_error "associating" "Private Subnet"
 
 ## Creating Security Groups
 
@@ -192,12 +162,7 @@ bastion_sg_id=$(aws ec2 create-security-group \
 --query 'GroupId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Bastion Security Group"
-else
-	echo "An error occured while creating Bastion Security Group"
-	exit 1
-fi
+check_error "creating" "Bastion Security Group"
 
 ### Creating Private Security Group
 priv_sg_id=$(aws ec2 create-security-group \
@@ -208,12 +173,7 @@ priv_sg_id=$(aws ec2 create-security-group \
 --query 'GroupId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Private Security Group"
-else
-	echo "An error occured while creating Private Security Group"
-	exit 1
-fi
+check_error "creating" "Private Security Group"
 
 ## Creating Ingress Rules for Security Groups
 
@@ -224,12 +184,7 @@ aws ec2 authorize-security-group-ingress \
 --port 22 \
 --cidr $my_ip > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Authorized SSH Ingress for Bastion Security Group from the public IP address of this host"
-else
-	echo "An error occured while authorizing SSH Ingress for Bastion Security Group"
-	exit 1
-fi
+check_error "authorizing" "SSH Ingress for Bastion Security Group"
 
 ### Creating Private Security Group Ingress Rule for SSH
 aws ec2 authorize-security-group-ingress \
@@ -238,12 +193,7 @@ aws ec2 authorize-security-group-ingress \
 --port 22 \
 --cidr $pub_subnet_cidr > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Authorized SSH Ingress for Private Security Group from the Public Subnet"
-else
-	echo "An error occured while authorizing SSH Ingress for Private Security Group"
-	exit 1
-fi
+check_error "authorizing" "SSH Ingress for Private Security Group"
 
 ## Allocating Elastic IP address
 elastic_ip_id=$(aws ec2 allocate-address \
@@ -252,12 +202,7 @@ elastic_ip_id=$(aws ec2 allocate-address \
 --query 'AllocationId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Allocated Elastic IP address"
-else
-	echo "An error occured while allocating Elastic IP address"
-	exit 1
-fi
+check_error "allocating" "Elastic IP"
 
 ## Creating NAT Gateway
 nat_gtw_id=$(aws ec2 create-nat-gateway \
@@ -267,12 +212,7 @@ nat_gtw_id=$(aws ec2 create-nat-gateway \
 --query 'NatGateway.NatGatewayId' \
 --output text)
 
-if [[ $? -eq 0 ]]; then
-	echo "Created NAT Gateway"
-else
-	echo "An error occured while creating NAT Gateway"
-	exit 1
-fi
+check_error "creating" "NAT Gateway"
 
 ## Creating Routes
 
@@ -282,12 +222,7 @@ aws ec2 create-route \
 --destination-cidr-block $igw_route_dest_cidr \
 --gateway-id $igw_id > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Route to Internet Gateway"
-else
-	echo "An error occured while creating Route to Internet Gateway"
-	exit 1
-fi
+check_error "creating" "Route to IGW"
 
 ### Waiting until NAT Gateway is available
 echo "Waiting for NAT Gateway to become available..."
@@ -310,12 +245,7 @@ aws ec2 create-route \
 --destination-cidr-block $nat_gtw_route_dest_cidr \
 --nat-gateway-id $nat_gtw_id > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Route to NAT Gateway"
-else
-	echo "An error occured while creating Route to NAT Gateway"
-	exit 1
-fi
+check_error "creating" "Route to NAT Gateway"
 
 ## Creating EC2 Instances
 
@@ -330,12 +260,7 @@ aws ec2 run-instances \
 --associate-public-ip-address \
 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$pub_instance_name}]" > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Bastion Host"
-else
-	echo "An error occured while creating Bastion Host"
-	exit 1
-fi
+check_error "creating" "Bastion Host"
 
 ## Creating Private Instance
 aws ec2 run-instances \
@@ -347,9 +272,4 @@ aws ec2 run-instances \
 --user-data $user_data_path \
 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$priv_instance_name}]" > /dev/null
 
-if [[ $? -eq 0 ]]; then
-	echo "Created Private Instance"
-else
-	echo "An error occured while creating Private Instance"
-	exit 1
-fi
+check_error "creating" "Private Instance"
