@@ -177,6 +177,20 @@ function attaching_igw() {
 	check_error "attaching" "IGW"
 }
 
+function create_route_table() {
+	local -n ret="$1"
+	local vpc_id="$2"
+	local name="$3"
+
+	ret=$(aws ec2 create-route-table \
+	--vpc-id "$vpc_id" \
+	--tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value=$name}]" \
+	--query 'RouteTable.RouteTableId' \
+	--output text)
+
+	check_error "creating" "$name RouteTable"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -202,22 +216,12 @@ attaching_igw "$igw_id" "$vpc_id"
 ## Creating Route Tables
 
 ### Creating Public Route Table
-pub_rtb_id=$(aws ec2 create-route-table \
---vpc-id $vpc_id \
---tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value=$pub_rtb_name}]" \
---query 'RouteTable.RouteTableId' \
---output text)
-
-check_error "creating" "Public Route Table"
+create_route_table "pub_rtb_id" "$vpc_id" "$pub_rtb_name"
 
 ### Creating Private Route Table
-priv_rtb_id=$(aws ec2 create-route-table \
---vpc-id $vpc_id \
---tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value=$priv_rtb_name}]" \
---query 'RouteTable.RouteTableId' \
---output text)
+create_route_table "priv_rtb_id" "$vpc_id" "$priv_rtb_name"
 
-check_error "creating" "Private Route Table"
+exit 0
 
 ## Associating Subnets with Route Tables
 
