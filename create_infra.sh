@@ -132,6 +132,30 @@ function create_subnet() {
 	check_error "creating" "$name Subnet"
 }
 
+##########################################
+# Creating an Internet Gateway
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the IGWID should be written to
+#	Name of the IGW
+# Outputs:
+#	Writes ID of the created IGW to variable
+##########################################
+function create_igw() {
+	# Setting the name of the variable to be filled
+	local -n ret=$1
+	local name=$2
+    
+	# Filling variable of given name with return value
+    ret=$(aws ec2 create-internet-gateway \
+    --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value=$name}]" \
+    --query 'InternetGateway.InternetGatewayId' \
+    --output text)
+    
+    check_error "creating" "Internet Gateway"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -149,12 +173,7 @@ create_subnet "priv_subnet_id" "$vpc_id" "$priv_subnet_cidr" "$priv_subnet_name"
 ### Creating and attaching IGW
 
 #### Creating IGW
-igw_id=$(aws ec2 create-internet-gateway \
---tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value=$igw_name}]" \
---query 'InternetGateway.InternetGatewayId' \
---output text)
-
-check_error "creating" "IGW"
+create_igw "igw_id" "$igw_name"
 
 ### Attaching IGW to VPC
 aws ec2 attach-internet-gateway \
