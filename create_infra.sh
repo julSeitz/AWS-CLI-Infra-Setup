@@ -92,6 +92,36 @@ function create_vpc() {
 	check_error "creating" "VPC"
 }
 
+##########################################
+# Creating a Subnet
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the SubnetID should be written to
+#	ID of the Subnets VPC
+#	CIDR range of the Subnet
+#	Name of the Subnet
+# Outputs:
+#	Writes ID of the created Subnet to variable
+##########################################
+function create_subnet() {
+	# Setting the name of the variable to be filled
+	local -n ret="$1"
+	local vpc_id="$2"
+	local cidr="$3"
+	local name="$4"
+
+	# Filling variable of given name with return value
+	ret=$(aws ec2 create-subnet \
+	--vpc-id $vpc_id \
+	--cidr-block $cidr \
+	--tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value="$name"}]" \
+	--query 'Subnet.SubnetId' \
+	--output text)
+
+	check_error "creating" "$name Subnet"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -101,24 +131,10 @@ create_vpc "vpc_id" "$vpc_cidr" "$vpc_name"
 ## Creating Subnets
 
 ### Creating Public Subnet
-pub_subnet_id=$(aws ec2 create-subnet \
---vpc-id $vpc_id \
---cidr-block $pub_subnet_cidr \
---tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value="$pub_subnet_name"}]" \
---query 'Subnet.SubnetId' \
---output text)
-
-check_error "creating" "Public Subnet"
+create_subnet "pub_subnet_id" "$vpc_id" "$pub_subnet_cidr" "$pub_subnet_name"
 
 ### Creating Private Subnet
-priv_subnet_id=$(aws ec2 create-subnet \
---vpc-id $vpc_id \
---cidr-block $priv_subnet_cidr \
---tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value="$priv_subnet_name"}]" \
---query 'Subnet.SubnetId' \
---output text)
-
-check_error "creating" "Private Subnet"
+create_subnet "priv_subnet_id" "$vpc_id" "$priv_subnet_cidr" "$priv_subnet_name"
 
 ### Creating and attaching IGW
 
