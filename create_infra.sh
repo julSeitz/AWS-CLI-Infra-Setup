@@ -55,8 +55,8 @@ priv_instance_name="PrivateInstance"
 # Function to check for errors and output success or failure
 function check_error() {
 	local exit_status=$?
-	local action=$1
-	local resource_name=$2
+	local action="$1"
+	local resource_name="$2"
 	if [[ $exit_status -eq 0 ]]; then
 		echo "Created $resource_name"
 	else
@@ -65,16 +65,41 @@ function check_error() {
 	fi
 }
 
+##########################################
+# Creating a VPC
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the VPC ID should be written to
+#	CIDR range of the VPC
+#	Name of the VPC
+# Outputs:
+#	Writes ID of the created VPC to variable
+##########################################
+function create_vpc() {
+	# Setting the name of the variable to be filled
+	local -n ret="$1"
+	local cidr="$2"
+	local name="$3"
+
+	# Splitting local variable declaration from initialization to preserve exit code of command substitution
+	local vpc_name
+
+	# Filling variable of given name with return value
+	ret=$(aws ec2 create-vpc \
+	--cidr-block "$cidr" \
+	--tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value=$name}]" \
+	--query 'Vpc.VpcId' \
+	--output text)
+
+	check_error "creating" "VPC"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
-vpc_id=$(aws ec2 create-vpc \
---cidr-block $vpc_cidr \
---tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value=$vpc_name}]" \
---query 'Vpc.VpcId' \
---output text)
 
-check_error "creating" "VPC"
+create_vpc "vpc_id" "$vpc_cidr" "$vpc_name"
 
 ## Creating Subnets
 
