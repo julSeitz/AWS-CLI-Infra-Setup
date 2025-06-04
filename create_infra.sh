@@ -82,9 +82,6 @@ function create_vpc() {
 	local cidr="$2"
 	local name="$3"
 
-	# Splitting local variable declaration from initialization to preserve exit code of command substitution
-	local vpc_name
-
 	# Filling variable of given name with return value
 	ret=$(aws ec2 create-vpc \
 	--cidr-block "$cidr" \
