@@ -68,7 +68,7 @@ function check_error() {
 	local action="$1"
 	local resource_name="$2"
 	if [[ $exit_status -eq 0 ]]; then
-		echo "Created $resource_name"
+		echo "Finished $action $resource_name"
 	else
 		echo "An error occured while $action $resource_name"
 		exit 1
