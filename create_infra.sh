@@ -156,6 +156,27 @@ function create_igw() {
     check_error "creating" "Internet Gateway"
 }
 
+##########################################
+# Attaching IGW to VPC
+# Globals:
+#	None
+# Arguments:
+#	ID of the IGW to attach
+#	ID of the VPC to attach IGW to
+# Outputs:
+#	None
+##########################################
+function attaching_igw() {
+	local igw_id=$1
+	local vpc_id=$2
+
+	aws ec2 attach-internet-gateway \
+	--internet-gateway-id "$igw_id" \
+	--vpc-id "$vpc_id"
+
+	check_error "attaching" "IGW"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -176,11 +197,7 @@ create_subnet "priv_subnet_id" "$vpc_id" "$priv_subnet_cidr" "$priv_subnet_name"
 create_igw "igw_id" "$igw_name"
 
 ### Attaching IGW to VPC
-aws ec2 attach-internet-gateway \
---internet-gateway-id $igw_id \
---vpc-id $vpc_id
-
-check_error "attaching" "IGW"
+attaching_igw "$igw_id" "$vpc_id"
 
 ## Creating Route Tables
 
