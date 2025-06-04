@@ -53,6 +53,16 @@ priv_instance_name="PrivateInstance"
 # Functions
 
 # Function to check for errors and output success or failure
+##########################################
+# Checks for errors of last AWS CLI command and outputs result
+# Globals:
+#	$? Last exit code
+# Arguments:
+#	Action the last command was attempting
+#	Resource the last command was working with
+# Outputs:
+#	Writes success or failure to stdout
+##########################################
 function check_error() {
 	local exit_status=$?
 	local action="$1"
