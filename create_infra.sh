@@ -177,6 +177,17 @@ function attaching_igw() {
 	check_error "attaching" "IGW"
 }
 
+##########################################
+# Creating Route Table
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the RTB-ID should be written to
+#	ID of the Subnet
+#	Name of the Route Table
+# Outputs:
+#	Writes ID of the created Route Table to variable
+##########################################
 function create_route_table() {
 	local -n ret="$1"
 	local vpc_id="$2"
@@ -191,6 +202,17 @@ function create_route_table() {
 	check_error "creating" "$name RouteTable"
 }
 
+##########################################
+# Associating Route Table with Subnet
+# Globals:
+#	None
+# Arguments:
+#	ID of the Route Table
+#	ID of the Subnet
+#	Name of the Subnet
+# Outputs:
+#	None
+##########################################
 function associate_subnet_with_rtb() {
 	local rtb_id="$1"
 	local subnet_id="$2"
