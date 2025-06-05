@@ -144,8 +144,8 @@ function create_subnet() {
 ##########################################
 function create_igw() {
 	# Setting the name of the variable to be filled
-	local -n ret=$1
-	local name=$2
+	local -n ret="$1"
+	local name="$2"
     
 	# Filling variable of given name with return value
     ret=$(aws ec2 create-internet-gateway \
@@ -189,10 +189,12 @@ function attaching_igw() {
 #	Writes ID of the created Route Table to variable
 ##########################################
 function create_route_table() {
+	# Setting the name of the variable to be filled
 	local -n ret="$1"
 	local vpc_id="$2"
 	local name="$3"
 
+	# Filling variable of given name with return value
 	ret=$(aws ec2 create-route-table \
 	--vpc-id "$vpc_id" \
 	--tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value=$name}]" \
