@@ -225,6 +225,37 @@ function associate_subnet_with_rtb() {
 	check_error "associating" "$subnet_name Subnet"
 }
 
+##########################################
+# Creating Security Group
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the SG-ID should be written to
+#	Name of the SG
+#	Description of the SG
+#	ID of the VPC
+# Outputs:
+#	Writes ID of the created SG to variable
+##########################################
+function create_security_group() {
+	# Setting the name of the variable to be filled
+	local -n ret="$1"
+	local name="$2"
+	local description="$3"
+	local vpc_id="$4"
+
+	# Filling variable of given name with return value
+	ret=$(aws ec2 create-security-group \
+	--group-name "$name" \
+	--description "$description" \
+	--vpc-id "$vpc_id" \
+	--tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$name}]" \
+	--query 'GroupId' \
+	--output text)
+
+	check_error "creating" "$name Security Group"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -266,26 +297,11 @@ associate_subnet_with_rtb "$priv_rtb_id" "$priv_subnet_id" "$priv_subnet_name"
 ## Creating Security Groups
 
 ### Creating Bastion Security Group
-bastion_sg_id=$(aws ec2 create-security-group \
---group-name "$bastion_sg_name" \
---description "$bastion_sg_description" \
---vpc-id $vpc_id \
---tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$bastion_sg_name}]" \
---query 'GroupId' \
---output text)
-
-check_error "creating" "Bastion Security Group"
+# Deliberate nonsense instead of VPC id
+create_security_group "bastion_sg_id" "$bastion_sg_name" "$bastion_sg_description" "$vpc_id"
 
 ### Creating Private Security Group
-priv_sg_id=$(aws ec2 create-security-group \
---group-name "$priv_sg_name" \
---description "$priv_sg_description" \
---vpc-id $vpc_id \
---tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value=$priv_sg_name}]" \
---query 'GroupId' \
---output text)
-
-check_error "creating" "Private Security Group"
+create_security_group "priv_sg_id" "$priv_sg_name" "$priv_sg_description" "$vpc_id"
 
 ## Creating Ingress Rules for Security Groups
 
