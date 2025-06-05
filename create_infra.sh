@@ -221,8 +221,6 @@ create_route_table "pub_rtb_id" "$vpc_id" "$pub_rtb_name"
 ### Creating Private Route Table
 create_route_table "priv_rtb_id" "$vpc_id" "$priv_rtb_name"
 
-exit 0
-
 ## Associating Subnets with Route Tables
 
 ### Associationg Public Subnet with Public Route Table
