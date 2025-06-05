@@ -191,6 +191,18 @@ function create_route_table() {
 	check_error "creating" "$name RouteTable"
 }
 
+function associate_subnet_with_rtb() {
+	local rtb_id="$1"
+	local subnet_id="$2"
+	local subnet_name="$3"
+
+	aws ec2 associate-route-table \
+	--route-table-id "$rtb_id" \
+	--subnet-id "$subnet_id" > /dev/null
+
+	check_error "associating" "$subnet_name Subnet"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -224,18 +236,10 @@ create_route_table "priv_rtb_id" "$vpc_id" "$priv_rtb_name"
 ## Associating Subnets with Route Tables
 
 ### Associationg Public Subnet with Public Route Table
-aws ec2 associate-route-table \
---route-table-id $pub_rtb_id \
---subnet-id $pub_subnet_id > /dev/null
-
-check_error "associating" "Public Subnet"
+associate_subnet_with_rtb "$pub_rtb_id" "$pub_subnet_id" "$pub_subnet_name"
 
 ### Associating Private Subnet with Private Route Table
-aws ec2 associate-route-table \
---route-table-id $priv_rtb_id \
---subnet-id $priv_subnet_id > /dev/null
-
-check_error "associating" "Private Subnet"
+associate_subnet_with_rtb "$priv_rtb_id" "$priv_subnet_id" "$priv_subnet_name"
 
 ## Creating Security Groups
 
