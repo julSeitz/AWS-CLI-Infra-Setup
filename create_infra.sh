@@ -258,6 +258,35 @@ function create_security_group() {
 	check_error "creating" "$name Security Group"
 }
 
+##########################################
+# Authorizing ingress to a SG from specific IP range
+# Globals:
+#	None
+# Arguments:
+#	Name of the SG
+#	ID of the SG
+#	Protocol to authorize
+#	Port to authorize
+#	Source IP range to authorize
+# Outputs:
+#	None
+##########################################
+function authorize-sg-ingress-from-ip() {
+	local name="$1"
+	local sg_id="$2"
+	local protocol="$3"
+	local port="$4"
+	local ip="$5"
+
+	aws ec2 authorize-security-group-ingress \
+	--group-id "$sg_id" \
+	--protocol "$protocol" \
+	--port "$port" \
+	--cidr "$ip" > /dev/null
+
+	check_error "authorizing" "ingress on $protocol port $port for $name from $ip"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -307,23 +336,14 @@ create_security_group "priv_sg_id" "$priv_sg_name" "$priv_sg_description" "$vpc_
 
 ## Creating Ingress Rules for Security Groups
 
-### Creating Bastion Security Group Ingress Rule for SSH
-aws ec2 authorize-security-group-ingress \
---group-id $bastion_sg_id \
---protocol tcp \
---port 22 \
---cidr $my_ip > /dev/null
+protocol="tcp"
+port="22"
 
-check_error "authorizing" "SSH Ingress for Bastion Security Group"
+### Creating Bastion Security Group Ingress Rule for SSH
+authorize-sg-ingress-from-ip "$bastion_sg_name" "$bastion_sg_id" "$protocol" "$port" "$my_ip"
 
 ### Creating Private Security Group Ingress Rule for SSH
-aws ec2 authorize-security-group-ingress \
---group-id $priv_sg_id \
---protocol tcp \
---port 22 \
---cidr $pub_subnet_cidr > /dev/null
-
-check_error "authorizing" "SSH Ingress for Private Security Group"
+authorize-sg-ingress-from-ip "$priv_sg_name" "$priv_sg_id" "$protocol" "$port" "$pub_subnet_cidr"
 
 ## Allocating Elastic IP address
 elastic_ip_id=$(aws ec2 allocate-address \
