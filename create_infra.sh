@@ -287,6 +287,31 @@ function authorize-sg-ingress-from-ip() {
 	check_error "authorizing" "ingress on $protocol port $port for $name from $ip"
 }
 
+##########################################
+# Allocating Elastic IP address
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the Elastic IP ID should be written to
+#	Name of the Elastic IP
+# Outputs:
+#	Writes ID of the allocated Elastic IP to variable
+##########################################
+function allocate_elastic_ip() {
+	# Setting the name of the variable to be filled
+	local -n ret="$1"
+	local name="$2"
+
+	# Filling variable of given name with return value
+	ret=$(aws ec2 allocate-address \
+	--domain VPC \
+	--tag-specification "ResourceType=elastic-ip,Tags=[{Key=Name,Value=$name}]" \
+	--query 'AllocationId' \
+	--output text)
+
+	check_error "allocating" "Elastic IP $name"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -346,13 +371,7 @@ authorize-sg-ingress-from-ip "$bastion_sg_name" "$bastion_sg_id" "$protocol" "$p
 authorize-sg-ingress-from-ip "$priv_sg_name" "$priv_sg_id" "$protocol" "$port" "$pub_subnet_cidr"
 
 ## Allocating Elastic IP address
-elastic_ip_id=$(aws ec2 allocate-address \
---domain VPC \
---tag-specification "ResourceType=elastic-ip,Tags=[{Key=Name,Value=$elastic_ip_name}]" \
---query 'AllocationId' \
---output text)
-
-check_error "allocating" "Elastic IP"
+allocate_elastic_ip "elastic_ip_id" "$elastic_ip_name"
 
 ## Creating NAT Gateway
 nat_gtw_id=$(aws ec2 create-nat-gateway \
