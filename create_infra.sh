@@ -267,26 +267,28 @@ function create_security_group() {
 #	ID of the SG
 #	Protocol to authorize
 #	Port to authorize
-#	Declaration of allowed source type, either 'ip' or 'sg'.
+#	Type of the authorized source, either 'ip' or 'sg'
 #	Source to authorize ingress from
 # Outputs:
 #	None
 ##########################################
 function authorize_sg_ingress_from_source() {
+	# Setting local variables
 	local name="$1"
 	local sg_id="$2"
 	local protocol="$3"
 	local port="$4"
-	local ip_or_sg="$5"
+	local source_type="$5"
 	local authorized_source="$6"
 	local option
 
-	if [[ "$ip_or_sg" == "ip" ]]; then
+	# Setting option based on given source type type
+	if [[ "$source_type" == "ip" ]]; then
 		option="--cidr"
-	elif [[ "$ip_or_sg" == "sg" ]]; then
+	elif [[ "$source_type" == "sg" ]]; then
 		option="--source-group"
 	else
-		echo "Invalid argument for ip_or_sg. Only 'ip' or 'sg' are allowed."
+		echo "Invalid argument for source_type. Only 'ip' or 'sg' are allowed."
 		exit 1
 	fi
 
