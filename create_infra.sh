@@ -370,6 +370,46 @@ function create_nat_gateway() {
 	done
 }
 
+##########################################
+# Creating route to given gateway
+# Globals:
+#	None
+# Arguments:
+#	ID of the route table to use
+#	Target CIDR block this route is used for
+#	Gateway type, either 'igw' or 'nat'
+#	ID of the gateway to route to
+# Outputs:
+#	None
+##########################################
+function create_route_to_gateway() {
+	# Setting local variables
+	local rtb_id="$1"
+	local destination_cidr_block="$2"
+	local gateway_type="$3"
+	local gateway_id="$4"
+	local option
+
+	# Setting option based on given gateway type
+	if [[ "$gateway_type" == "nat" ]]; then
+		option="--nat-gateway-id"
+	elif [[ "$gateway_type" == "igw" ]]; then
+		option="--gateway-id"
+	else
+		echo "Invalid argument for gateway_type. Only 'nat' or 'igw' are allowed."
+		exit 1
+	fi
+
+	# Creating route
+	aws ec2 create-route \
+	--route-table-id "$rtb_id" \
+	--destination-cidr-block "$destination_cidr_block" \
+	"$option" "$gateway_id" > /dev/null
+
+	# Checking exit code for errors
+	check_error "creating" "Route to Gateway $gateway_id"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -438,21 +478,10 @@ create_nat_gateway "nat_gtw_id" "$nat_gtw_name" "$elastic_ip_id" "$pub_subnet_id
 ## Creating Routes
 
 ### Creating IGW Route
-aws ec2 create-route \
---route-table-id $pub_rtb_id \
---destination-cidr-block $igw_route_dest_cidr \
---gateway-id $igw_id > /dev/null
-
-check_error "creating" "Route to IGW"
-
+create_route_to_gateway "$pub_rtb_id" "$igw_route_dest_cidr" "igw" "$igw_id"
 
 ### Creating Nat Gateway Route
-aws ec2 create-route \
---route-table-id $priv_rtb_id \
---destination-cidr-block $nat_gtw_route_dest_cidr \
---nat-gateway-id $nat_gtw_id > /dev/null
-
-check_error "creating" "Route to NAT Gateway"
+create_route_to_gateway "$priv_rtb_id" "$nat_gtw_route_dest_cidr" "nat" "$nat_gtw_id"
 
 ## Creating EC2 Instances
 
