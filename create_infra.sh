@@ -412,6 +412,61 @@ function create_route_to_gateway() {
 	check_error "creating" "Route to Gateway $gateway_id"
 }
 
+##########################################
+# Creating EC2 instance
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the Instance-ID should be written to
+#	Name of the instance
+#	ID of the Amazon Machine Image to use
+#	The instance type
+#	The name of the key to use
+#	ID of the security group(s) to assign to the instance
+#	ID of the subnet to place the instance in
+#	Path to user_data file
+#	Flag for allocating public ip address, only 'public-ip' is accepted to request public-ip
+# Outputs:
+#	Writes ID of the created EC2 instance to variable
+##########################################
+function create_ec2_instance() {
+	# Setting the name of the variable to be filled
+	local -n ret="$1"
+	# Setting local variables
+	local name="$2"
+	local ami_id="$3"
+	local instance_type="$4"
+	local key_name="$5"
+	local sg_id="$6"
+	local subnet_id="$7"
+	local user_data_path="$8"
+	local associate_public_ip="$9"
+	local option
+
+	# Setting option for public ip based on given input
+	if [[ "$associate_public_ip" == "public-ip" ]]; then
+		option="--associate-public-ip-address"
+	else
+		option="--no-associate-public-ip-address"
+	fi
+
+	# Filling variable of given name with return value
+	ret=$(aws ec2 run-instances \
+	--image-id "$ami_id" \
+	--instance-type "$instance_type" \
+	--key-name $key_name \
+	--security-group-id $sg_id \
+	--subnet-id $subnet_id \
+	--user-data $user_data_path \
+	--query 'Instances[0].InstanceId' \
+	--output text \
+	"$option" \
+	--tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$name}]")
+
+	# Checking exit code for errors
+	check_error "creating" "EC2 instance $name"
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -488,26 +543,7 @@ create_route_to_gateway "$priv_rtb_id" "$nat_gtw_route_dest_cidr" "nat" "$nat_gt
 ## Creating EC2 Instances
 
 ### Creating Bastion Host
-aws ec2 run-instances \
---image-id $ami_id \
---instance-type $instance_type \
---key-name $key_name \
---security-group-id $bastion_sg_id \
---subnet-id $pub_subnet_id \
---user-data $user_data_path \
---associate-public-ip-address \
---tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$pub_instance_name}]" > /dev/null
+create_ec2_instance "bastion_host_id" "$pub_instance_name" "$ami_id" "$instance_type" "$key_name" "$bastion_sg_id" "$pub_subnet_id" "$user_data_path" "public-ip"
 
-check_error "creating" "Bastion Host"
-
-## Creating Private Instance
-aws ec2 run-instances \
---image-id $ami_id \
---instance-type $instance_type \
---key-name $key_name \
---security-group-id $priv_sg_id \
---subnet-id $priv_subnet_id \
---user-data $user_data_path \
---tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$priv_instance_name}]" > /dev/null
-
-check_error "creating" "Private Instance"
+### Creating Private Instance
+create_ec2_instance "priv_instance_id" "$priv_instance_name" "$ami_id" "$instance_type" "$key_name" "$priv_sg_id" "$priv_subnet_id" "$user_data_path"
