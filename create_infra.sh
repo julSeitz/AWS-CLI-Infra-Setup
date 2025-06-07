@@ -508,7 +508,6 @@ associate_subnet_with_rtb "$priv_rtb_id" "$priv_subnet_id" "$priv_subnet_name"
 ## Creating Security Groups
 
 ### Creating Bastion Security Group
-# Deliberate nonsense instead of VPC id
 create_security_group "bastion_sg_id" "$bastion_sg_name" "$bastion_sg_description" "$vpc_id"
 
 ### Creating Private Security Groupgateway
