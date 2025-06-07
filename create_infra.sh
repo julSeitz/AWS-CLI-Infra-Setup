@@ -259,7 +259,7 @@ function create_security_group() {
 }
 
 ##########################################
-# Authorizing ingress to a SG from specific IP range
+# Authorizing ingress to a SG from specific source
 # Globals:
 #	None
 # Arguments:
@@ -267,24 +267,36 @@ function create_security_group() {
 #	ID of the SG
 #	Protocol to authorize
 #	Port to authorize
-#	Source IP range to authorize
+#	Declaration of allowed source type, either 'ip' or 'sg'.
+#	Source to authorize ingress from
 # Outputs:
 #	None
 ##########################################
-function authorize-sg-ingress-from-ip() {
+function authorize_sg_ingress_from_source() {
 	local name="$1"
 	local sg_id="$2"
 	local protocol="$3"
 	local port="$4"
-	local ip="$5"
+	local ip_or_sg="$5"
+	local authorized_source="$6"
+	local option
+
+	if [[ "$ip_or_sg" == "ip" ]]; then
+		option="--cidr"
+	elif [[ "$ip_or_sg" == "sg" ]]; then
+		option="--source-group"
+	else
+		echo "Invalid argument for ip_or_sg. Only 'ip' or 'sg' are allowed."
+		exit 1
+	fi
 
 	aws ec2 authorize-security-group-ingress \
 	--group-id "$sg_id" \
 	--protocol "$protocol" \
 	--port "$port" \
-	--cidr "$ip" > /dev/null
+	"$option" "$authorized_source" > /dev/null
 
-	check_error "authorizing" "ingress on $protocol port $port for $name from $ip"
+	check_error "authorizing" "ingress on $protocol port $port for $name from $authorized_source"
 }
 
 ##########################################
@@ -363,12 +375,13 @@ create_security_group "priv_sg_id" "$priv_sg_name" "$priv_sg_description" "$vpc_
 
 protocol="tcp"
 port="22"
+source_type="ip"
 
 ### Creating Bastion Security Group Ingress Rule for SSH
-authorize-sg-ingress-from-ip "$bastion_sg_name" "$bastion_sg_id" "$protocol" "$port" "$my_ip"
+authorize_sg_ingress_from_source "$bastion_sg_name" "$bastion_sg_id" "$protocol" "$port" "$source_type" "$my_ip"
 
 ### Creating Private Security Group Ingress Rule for SSH
-authorize-sg-ingress-from-ip "$priv_sg_name" "$priv_sg_id" "$protocol" "$port" "$pub_subnet_cidr"
+authorize_sg_ingress_from_source "$priv_sg_name" "$priv_sg_id" "$protocol" "$port" "$source_type" "$pub_subnet_cidr"
 
 ## Allocating Elastic IP address
 allocate_elastic_ip "elastic_ip_id" "$elastic_ip_name"
