@@ -324,6 +324,52 @@ function allocate_elastic_ip() {
 	check_error "allocating" "Elastic IP $name"
 }
 
+
+##########################################
+# Creating NAT Gateway and waiting until it is available
+# Globals:
+#	None
+# Arguments:
+#	Name of the varible the NAT-Gateway-ID should be written to
+#	Name of the NAT Gateway
+#	ID of the Elastic IP to assign to the NAT Gateway
+#	ID of the subnet to place the NAT Gateway in
+# Outputs:
+#	Writes ID of the created NAT Gateway to variable
+##########################################
+function create_nat_gateway() {
+	# Setting the name of the variable to be filled
+	local -n ret="$1"
+	local name="$2"
+	local elastic_ip_id="$3"
+	local subnet_id="$4"
+
+	# Filling variable of given name with return value
+	ret=$(aws ec2 create-nat-gateway \
+	--allocation-id $elastic_ip_id \
+	--subnet-id $subnet_id \
+	--tag-specifications "ResourceType=natgateway,Tags=[{Key=Name,Value=$name}]" \
+	--query 'NatGateway.NatGatewayId' \
+	--output text)
+
+	check_error "creating" "NAT Gateway $name"
+
+	### Waiting until NAT Gateway is available
+	echo "Waiting for NAT Gateway to become available..."
+	while [[ true ]]; do
+		nat_gtw_state=$(aws ec2 describe-nat-gateways \
+		--nat-gateway-id $nat_gtw_id \
+		--query 'NatGateways[*].State' \
+		--output text)
+		if [[ $nat_gtw_state = "available" ]]; then
+			echo "NAT Gateway is available!"
+			break
+		else
+			sleep 10
+		fi
+	done
+}
+
 # Creating Infrastructure
 
 ## Creating VPC
@@ -368,7 +414,7 @@ associate_subnet_with_rtb "$priv_rtb_id" "$priv_subnet_id" "$priv_subnet_name"
 # Deliberate nonsense instead of VPC id
 create_security_group "bastion_sg_id" "$bastion_sg_name" "$bastion_sg_description" "$vpc_id"
 
-### Creating Private Security Group
+### Creating Private Security Groupgateway
 create_security_group "priv_sg_id" "$priv_sg_name" "$priv_sg_description" "$vpc_id"
 
 ## Creating Ingress Rules for Security Groups
@@ -387,14 +433,7 @@ authorize_sg_ingress_from_source "$priv_sg_name" "$priv_sg_id" "$protocol" "$por
 allocate_elastic_ip "elastic_ip_id" "$elastic_ip_name"
 
 ## Creating NAT Gateway
-nat_gtw_id=$(aws ec2 create-nat-gateway \
---allocation-id $elastic_ip_id \
---subnet-id $pub_subnet_id \
---tag-specifications "ResourceType=natgateway,Tags=[{Key=Name,Value=$nat_gtw_name}]" \
---query 'NatGateway.NatGatewayId' \
---output text)
-
-check_error "creating" "NAT Gateway"
+create_nat_gateway "nat_gtw_id" "$nat_gtw_name" "$elastic_ip_id" "$pub_subnet_id"
 
 ## Creating Routes
 
@@ -406,20 +445,6 @@ aws ec2 create-route \
 
 check_error "creating" "Route to IGW"
 
-### Waiting until NAT Gateway is available
-echo "Waiting for NAT Gateway to become available..."
-while [[ true ]]; do
-	nat_gtw_state=$(aws ec2 describe-nat-gateways \
-	--nat-gateway-id $nat_gtw_id \
-	--query 'NatGateways[*].State' \
-	--output text)
-	if [[ $nat_gtw_state = "available" ]]; then
-		echo "NAT Gateway is available!"
-		break
-	else
-		sleep 10
-	fi
-done
 
 ### Creating Nat Gateway Route
 aws ec2 create-route \
